@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+  <meta charset="UTF-8" />
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover"
+  />
+
+  <meta
+    name="description"
+    content="Generiranje timova i praćenje rezultata odbojke na pijesku."
+  />
+
+  <meta name="theme-color" content="#0f766e" />
+
+  <title>Odbojka na pijesku - Špišić Bukovica</title>
+
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <div class="offline-banner" id="offlineBanner" hidden>
+    Nema internetske veze. Promjene se trenutno ne mogu spremiti.
+  </div>
+
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon" aria-hidden="true">🏐</div>
+
+        <div>
+          <h1>Odbojka na pijesku - Špišić Bukovica</h1>
+          <p>Timovi, rezultati i statistika ekipe</p>
+        </div>
+      </div>
+
+      <div class="header-status">
+        <span class="connection-dot" id="connectionDot"></span>
+        <span id="connectionText">Povezivanje...</span>
+      </div>
+    </header>
+
+    <main>
+      <!-- ===================================================
+           IGRAČI
+      ==================================================== -->
+
+      <section class="page active" id="pagePlayers">
+        <div class="page-grid two-column">
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Igrači</h2>
+
+                <p class="card-subtitle">
+                  Dodaj sve igrače koji igraju s ekipom.
+                </p>
+              </div>
+
+              <span class="badge" id="playerCountBadge">0 igrača</span>
+            </div>
+
+            <form id="addPlayerForm">
+              <div class="input-row">
+                <input
+                  class="input"
+                  id="newPlayerName"
+                  type="text"
+                  maxlength="40"
+                  autocomplete="off"
+                  placeholder="Ime igrača"
+                  required
+                />
+
+                <button
+                  class="button"
+                  id="addPlayerButton"
+                  type="submit"
+                >
+                  ＋ Dodaj
+                </button>
+              </div>
+            </form>
+
+            <div class="spacer"></div>
+
+            <div class="players-list" id="managePlayersList"></div>
+          </article>
+
+          <aside class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Brzi pregled</h2>
+
+                <p class="card-subtitle">
+                  Podaci se spremaju u zajedničku Supabase bazu.
+                </p>
+              </div>
+            </div>
+
+            <div class="info-box">
+              <strong>1. Dodaj igrače</strong>
+
+              <p>
+                Igrači se jednom unesu i ostaju dostupni svim uređajima.
+              </p>
+            </div>
+
+            <div class="info-box">
+              <strong>2. Označi prisutne</strong>
+
+              <p>
+                Prisutni igrači ostaju lokalno označeni samo na trenutnom
+                uređaju.
+              </p>
+            </div>
+
+            <div class="info-box">
+              <strong>3. Generiraj timove</strong>
+
+              <p>
+                Aplikacija potpuno nasumično izmiješa odabrane igrače.
+              </p>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <!-- ===================================================
+           NOVA IGRA
+      ==================================================== -->
+
+      <section class="page" id="pageGame">
+        <div class="page-grid two-column">
+          <article class="card">
+            <div class="card-header">
+              <div>
+                <h2 class="card-title">Prisutni igrači</h2>
+
+                <p class="card-subtitle">
+                  Klikni igrače koji su došli na današnji session.
+                </p>
+              </div>
+
+              <span class="badge" id="selectedCountBadge">
+                0 prisutnih
+              </span>
+            </div>
+
+            <div class="selection-actions">
+              <button
+                class="button button-neutral button-small"
+                id="selectAllPlayersButton"
+                type="button"
+              >
+                Odaberi sve
+              </button>
+
+              <button
+                class="button button-neutral button-small"
+                id="clearSelectedPlayersButton"
+                type="button"
+              >
+                Makni sve
+              </button>
+            </div>
+
+            <div class="players-list" id="selectPlayersList"></div>
+          </article>
+
+          <aside class="card">
+            <div class="form-group">
+              <label class="form-label" for="sessionDate">
+                Datum
+              </label>
+
+              <input
+                class="input"
+                id="sessionDate"
+                type="date"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="sessionLocation">
+                Lokacija
+              </label>
+
+              <input
+                class="input"
+                id="sessionLocation"
+                type="text"
+                maxlength="80"
+                placeholder="Npr. Špišić Bukovica"
+              />
+            </div>
+
+            <div class="form-group">
+              <span class="form-label">Format igre</span>
+
+              <div class="segmented-control">
+                <div>
+                  <input
+                    class="segment-input"
+                    id="teamSize2"
+                    name="teamSize"
+                    type="radio"
+                    value="2"
+                  />
+
+                  <label class="segment-label" for="teamSize2">
+                    2v2
+                  </label>
+                </div>
+
+                <div>
+                  <input
+                    class="segment-input"
+                    id="teamSize3"
+                    name="teamSize"
+                    type="radio"
+                    value="3"
+                  />
+
+                  <label class="segment-label" for="teamSize3">
+                    3v3
+                  </label>
+                </div>
+
+                <div>
+                  <input
+                    class="segment-input"
+                    id="teamSize4"
+                    name="teamSize"
+                    type="radio"
+                    value="4"
+                    checked
+                  />
+
+                  <label class="segment-label" for="teamSize4">
+                    4v4
+                  </label>
+                </div>
+
+                <div>
+                  <input
+                    class="segment-input"
+                    id="teamSize5"
+                    name="teamSize"
+                    type="radio"
+                    value="5"
+                  />
+
+                  <label class="segment-label" for="teamSize5">
+                    5v5
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="session-summary">
+              <div class="summary-item">
+                <span class="summary-value" id="summarySelected">0</span>
+                <span class="summary-label">Odabrano</span>
+              </div>
+
+              <div class="summary-item">
+                <span class="summary-value" id="summaryRequired">8</span>
+                <span class="summary-label">Potrebno</span>
+              </div>
+
+              <div class="summary-item">
+                <span class="summary-value" id="summaryBench">0</span>
+                <span class="summary-label">Klupa</span>
+              </div>
+            </div>
+
+            <div
+              class="alert alert-error"
+              id="gameAlert"
+              role="alert"
+            ></div>
+
+            <button
+              class="button button-block"
+              id="generateTeamsButton"
+              type="button"
+            >
+              🎲 Generiraj timove
+            </button>
+          </aside>
+        </div>
+
+        <article class="card generated-card" id="generatedTeamsCard" hidden>
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Generirani timovi</h2>
+
+              <p
+                class="card-subtitle"
+                id="generatedTeamsDescription"
+              ></p>
+            </div>
+
+            <button
+              class="button button-neutral button-small"
+              id="regenerateTeamsButton"
+              type="button"
+            >
+              Ponovno izmiješaj
+            </button>
+          </div>
+
+          <div class="teams-container">
+            <section class="team-card team-a">
+              <div class="team-header">
+                <h3>Tim A</h3>
+              </div>
+
+              <ul class="team-list" id="teamAList"></ul>
+            </section>
+
+            <section class="team-card team-b">
+              <div class="team-header">
+                <h3>Tim B</h3>
+              </div>
+
+              <ul class="team-list" id="teamBList"></ul>
+            </section>
+          </div>
+
+          <section class="bench-card" id="benchCard" hidden>
+            <h3>Na klupi</h3>
+            <div class="bench-list" id="benchList"></div>
+          </section>
+
+          <section class="score-panel">
+            <h3>Rezultat</h3>
+
+            <div class="score-grid">
+              <div class="form-group">
+                <label class="form-label" for="teamAScore">
+                  Tim A
+                </label>
+
+                <input
+                  class="input score-input"
+                  id="teamAScore"
+                  type="number"
+                  min="0"
+                  max="999"
+                  inputmode="numeric"
+                  placeholder="0"
+                />
+              </div>
+
+              <div class="score-divider">:</div>
+
+              <div class="form-group">
+                <label class="form-label" for="teamBScore">
+                  Tim B
+                </label>
+
+                <input
+                  class="input score-input"
+                  id="teamBScore"
+                  type="number"
+                  min="0"
+                  max="999"
+                  inputmode="numeric"
+                  placeholder="0"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="matchNote">
+                Napomena
+              </label>
+
+              <input
+                class="input"
+                id="matchNote"
+                type="text"
+                maxlength="200"
+                placeholder="Opcionalno"
+              />
+            </div>
+
+            <button
+              class="button button-block"
+              id="saveMatchButton"
+              type="button"
+            >
+              💾 Spremi utakmicu
+            </button>
+          </section>
+        </article>
+      </section>
+
+      <!-- ===================================================
+           POVIJEST
+      ==================================================== -->
+
+      <section class="page" id="pageHistory">
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Povijest utakmica</h2>
+
+              <p class="card-subtitle">
+                Utakmice su grupirane po datumu sessiona.
+              </p>
+            </div>
+
+            <span class="badge" id="historyCountBadge">
+              0 utakmica
+            </span>
+          </div>
+
+          <div class="history-list" id="historyList"></div>
+        </article>
+      </section>
+
+      <!-- ===================================================
+           STATISTIKA
+      ==================================================== -->
+
+      <section class="page" id="pageStats">
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Statistika</h2>
+
+              <p class="card-subtitle">
+                Poredak prema pobjedama, uspješnosti i bod-razlici.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="stats-table-wrapper"
+            id="statsTableWrapper"
+          ></div>
+        </article>
+      </section>
+
+      <!-- ===================================================
+           POSTAVKE
+      ==================================================== -->
+
+      <section class="page" id="pageSettings">
+        <article class="card">
+          <div class="card-header">
+            <div>
+              <h2 class="card-title">Postavke</h2>
+
+              <p class="card-subtitle">
+                Alati za sigurnosnu kopiju i osvježavanje podataka.
+              </p>
+            </div>
+          </div>
+
+          <div class="settings-grid">
+            <section class="setting-box">
+              <h3>Osvježi podatke</h3>
+
+              <p>
+                Ponovno učitaj igrače i utakmice iz Supabase baze.
+              </p>
+
+              <button
+                class="button button-block"
+                id="refreshDataButton"
+                type="button"
+              >
+                🔄 Osvježi
+              </button>
+            </section>
+
+            <section class="setting-box">
+              <h3>Izvoz podataka</h3>
+
+              <p>
+                Preuzmi JSON sigurnosnu kopiju igrača i utakmica.
+              </p>
+
+              <button
+                class="button button-neutral button-block"
+                id="exportDataButton"
+                type="button"
+              >
+                ⬇️ Preuzmi backup
+              </button>
+            </section>
+          </div>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <nav class="bottom-navigation" aria-label="Glavna navigacija">
+    <div class="bottom-navigation-inner">
+      <button
+        class="nav-button active"
+        data-page="players"
+        type="button"
+      >
+        <span class="nav-icon" aria-hidden="true">👥</span>
+        <span class="nav-label">Igrači</span>
+      </button>
+
+      <button
+        class="nav-button"
+        data-page="game"
+        type="button"
+      >
+        <span class="nav-icon" aria-hidden="true">🏐</span>
+        <span class="nav-label">Nova igra</span>
+      </button>
+
+      <button
+        class="nav-button"
+        data-page="history"
+        type="button"
+      >
+        <span class="nav-icon" aria-hidden="true">📅</span>
+        <span class="nav-label">Povijest</span>
+      </button>
+
+      <button
+        class="nav-button"
+        data-page="stats"
+        type="button"
+      >
+        <span class="nav-icon" aria-hidden="true">🏆</span>
+        <span class="nav-label">Statistika</span>
+      </button>
+
+      <button
+        class="nav-button"
+        data-page="settings"
+        type="button"
+      >
+        <span class="nav-icon" aria-hidden="true">⚙️</span>
+        <span class="nav-label">Postavke</span>
+      </button>
+    </div>
+  </nav>
+
+  <div
+    class="toast-container"
+    id="toastContainer"
+    aria-live="polite"
+  ></div>
+
+  <div
+    class="modal-backdrop"
+    id="editPlayerModal"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="editPlayerModalTitle"
+  >
+    <div class="modal">
+      <h2 id="editPlayerModalTitle">Uredi igrača</h2>
+
+      <p>Promijeni ime ili aktivnost igrača.</p>
+
+      <form id="editPlayerForm">
+        <input id="editPlayerId" type="hidden" />
+
+        <div class="form-group">
+          <label class="form-label" for="editPlayerName">
+            Ime
+          </label>
+
+          <input
+            class="input"
+            id="editPlayerName"
+            type="text"
+            maxlength="40"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="editPlayerActive">
+            Status
+          </label>
+
+          <select class="input" id="editPlayerActive">
+            <option value="true">Aktivan</option>
+            <option value="false">Neaktivan</option>
+          </select>
+        </div>
+
+        <div class="modal-actions">
+          <button
+            class="button button-neutral"
+            id="cancelEditPlayerButton"
+            type="button"
+          >
+            Odustani
+          </button>
+
+          <button
+            class="button"
+            id="savePlayerChangesButton"
+            type="submit"
+          >
+            Spremi
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
